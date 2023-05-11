@@ -3,10 +3,12 @@ var router = express.Router();
 require('dotenv').config()
 const abiDecoder = require("abi-decoder");
 const axios = require("axios");
+var cors = require('cors');
+router.use(cors());
 
 /* GET home page. */
 router.get("/abi", async function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
+  // res.header("Access-Control-Allow-Origin", "*");
   const contract = req.query.contract;
   const hx = req.query.hx;
   console.log(contract);
