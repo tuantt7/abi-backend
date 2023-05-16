@@ -6,8 +6,8 @@ const axios = require("axios");
 var cors = require('cors');
 router.use(cors());
 
-/* GET home page. */
-router.get("/abi", async function (req, res, next) {
+
+router.post("/abi", async function (req, res, next) {
   // res.header("Access-Control-Allow-Origin", "*");
   const contract = req.query.contract;
   const hx = req.query.hx;
