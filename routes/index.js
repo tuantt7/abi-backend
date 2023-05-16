@@ -1,20 +1,19 @@
 var express = require("express");
 var router = express.Router();
-require('dotenv').config()
+require("dotenv").config();
 const abiDecoder = require("abi-decoder");
 const axios = require("axios");
-var cors = require('cors');
+var cors = require("cors");
 router.use(cors());
 
-
 router.post("/abi", async function (req, res, next) {
-  // res.header("Access-Control-Allow-Origin", "*");
-  const contract = req.query.contract;
-  const hx = req.query.hx;
-  console.log(contract);
+  const contract = req.body.contract;
+  const hx = req.body.hx;
+  const net = req.body.net;
+  const network = net === "sepolia" ? process.env.S_U : process.env.M_U;
 
   const response = await axios.get(
-    `${process.env.S_U}/api?module=contract&action=getabi&address=${contract}&apikey=${process.env.API_T}`
+    `${network}/api?module=contract&action=getabi&address=${contract}&apikey=${process.env.API_T}`
   );
   if (response.data.status == 0 && response.data.message == "NOTOK") {
     res.send(response.data);
