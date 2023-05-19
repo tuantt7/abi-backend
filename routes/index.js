@@ -64,4 +64,62 @@ router.get("/transaction", async function (req, res, next) {
   }
 });
 
+router.get("/block", async function (req, res, next) {
+  const web3 = web3Api(req.query.net);
+  try {
+    const response = await web3.eth.getBlock(req.query.id);
+
+    const latestFinalizedBlock = await web3.eth.getBlock("finalized");
+    response.finalized = req.query.id <= latestFinalizedBlock.number;
+
+    res.status(200).send(response);
+  } catch (error) {
+    console.log(error);
+    res.status(200).send(error);
+  }
+});
+
+router.get("/txsBlock", async function (req, res, next) {
+  const web3 = web3Api(req.query.net);
+  const { page } = req.query;
+
+  try {
+    const response = await web3.eth.getBlock(req.query.id);
+    const transactions = [];
+    const filterData = response.transactions
+      .sort()
+      .filter(
+        (item, index) => index >= page * 10 - 10 && index <= page * 10 - 1
+      );
+    for (let index = 0; index < filterData.length; index++) {
+      const p = filterData[index];
+      const detail = await web3.eth.getTransaction(p);
+      const detail2 = await web3.eth.getTransactionReceipt(p);
+      detail.contractAddress = detail2.contractAddress;
+      detail.timestamp = response.timestamp;
+      transactions.push(detail);
+    }
+
+    res.status(200).send({
+      transactions,
+      total: response.transactions.length,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(200).send(error);
+  }
+});
+
+const getDetail = async (net, transactions) => {
+  const web3 = web3Api(net);
+  const res = [];
+  await transactions.forEach(async (item) => {
+    const detail = await web3.eth.getTransaction(item);
+    const detail2 = await web3.eth.getTransactionReceipt(item);
+    detail.contractAddress = detail2.contractAddress;
+    res.push(detail);
+  });
+  return res;
+};
+
 module.exports = router;
