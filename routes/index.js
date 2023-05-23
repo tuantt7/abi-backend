@@ -197,6 +197,7 @@ router.get("/get-log", async function (req, res, next) {
           from: trasnfers.returnValues.from,
           to: trasnfers.returnValues.to,
           event: trasnfers.event,
+          logIndex: trasnfers.logIndex
         };
       })
     );
@@ -210,7 +211,8 @@ router.get("/get-log", async function (req, res, next) {
           delete item.data[property];
         } else if (
           isNumeric(property) ||
-          web3.utils.isAddress(item.data[property])
+          (item.event === "Transfer" &&
+            (property === "to" || property === "from"))
         ) {
           delete item.data[property];
         }
