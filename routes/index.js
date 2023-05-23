@@ -16,7 +16,7 @@ router.use(function (req, res, next) {
   const origin = req.headers.origin;
   const authorised = accept.includes(origin);
   if (!authorised) {
-    return res.status(403).send(origin + "Unauthorised!");
+    return res.status(403).send("Unauthorised!");
   } else {
     next();
   }
@@ -28,7 +28,18 @@ router.post("/decode", async function (req, res, next) {
   const net = req.body.net;
   const network =
     net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
-  const response = await getABI(network, contract);
+  const web3 = web3Api(net);
+
+  let _IMPLEMENTATION_SLOT =
+    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+  let address = await web3.eth.getStorageAt(contract, _IMPLEMENTATION_SLOT);
+  const notAddress =
+    "0x0000000000000000000000000000000000000000000000000000000000000000";
+  if (address !== notAddress) {
+    address = address.replace("000000000000000000000000", "");
+  } else address = contract;
+
+  const response = await getABI(network, address);
   if (response.status == 0 && response.message == "NOTOK") {
     res.send(response);
     return;
@@ -141,20 +152,21 @@ router.get("/get-log", async function (req, res, next) {
       let storagePosition =
         "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
       let address = await web3.eth.getStorageAt(p.address, storagePosition);
-      console.log(address);
       const notAddress =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
       if (address !== notAddress) {
         address = address.replace("000000000000000000000000", "");
       } else address = p.address;
       const result = await getABI(network, address);
-      const temp = {
-        address: p.address,
-        abi: JSON.parse(result.result || ""),
-        block: p.blockNumber,
-        id: p.id,
-      };
-      logs.push(temp);
+      if (result.status == 1) {
+        const temp = {
+          address: p.address,
+          abi: JSON.parse(result.result || ""),
+          block: p.blockNumber,
+          id: p.id,
+        };
+        logs.push(temp);
+      }
     }
 
     logs = await Promise.all(
@@ -213,7 +225,6 @@ router.get("/get-log", async function (req, res, next) {
 });
 
 const getABI = async (network, contract) => {
-  console.log(network + "---" + contract);
   const response = await axios.get(
     `${network}/api?module=contract&action=getabi&address=${contract}&apikey=${process.env.SEPOLIA_SCAN_KEY}`
   );
