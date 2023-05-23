@@ -6,6 +6,7 @@ const axios = require("axios");
 var cors = require("cors");
 router.use(cors());
 const { web3Api } = require("../web3");
+const { etherScan } = require("../etherScan");
 
 router.use(function (req, res, next) {
   const accept = [
@@ -28,16 +29,8 @@ router.post("/decode", async function (req, res, next) {
   const net = req.body.net;
   const network =
     net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
-  const web3 = web3Api(net);
 
-  let _IMPLEMENTATION_SLOT =
-    "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
-  let address = await web3.eth.getStorageAt(contract, _IMPLEMENTATION_SLOT);
-  const notAddress =
-    "0x0000000000000000000000000000000000000000000000000000000000000000";
-  if (address !== notAddress) {
-    address = address.replace("000000000000000000000000", "");
-  } else address = contract;
+  const address = (await getImplementation(network, contract)) || contract;
 
   const response = await getABI(network, address);
   if (response.status == 0 && response.message == "NOTOK") {
@@ -120,7 +113,6 @@ router.get("/txsBlock", async function (req, res, next) {
 router.get("/abi", async function (req, res, next) {
   const contract = req.query.contract;
   const net = req.query.net;
-  console.log(contract, net);
   const network =
     net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
   const response = await getABI(network, contract);
@@ -148,15 +140,9 @@ router.get("/get-log", async function (req, res, next) {
     for (let index = 0; index < receipt.logs.length; index++) {
       await wait(250);
       const p = { ...receipt.logs[index] };
+      const address =
+        (await getImplementation(network, p.address)) || p.address;
 
-      let storagePosition =
-        "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
-      let address = await web3.eth.getStorageAt(p.address, storagePosition);
-      const notAddress =
-        "0x0000000000000000000000000000000000000000000000000000000000000000";
-      if (address !== notAddress) {
-        address = address.replace("000000000000000000000000", "");
-      } else address = p.address;
       const result = await getABI(network, address);
       if (result.status == 1) {
         const temp = {
@@ -197,7 +183,7 @@ router.get("/get-log", async function (req, res, next) {
           from: trasnfers.returnValues.from,
           to: trasnfers.returnValues.to,
           event: trasnfers.event,
-          logIndex: trasnfers.logIndex
+          logIndex: trasnfers.logIndex,
         };
       })
     );
@@ -206,13 +192,14 @@ router.get("/get-log", async function (req, res, next) {
       item.data = Object.assign({}, item.trasnfers.returnValues);
       item.addressLogs = [];
       for (const property in item.data) {
-        if (web3.utils.isAddress(item.data[property]) && isNumeric(property)) {
+        if (isNumeric(property) && web3.utils.isAddress(item.data[property])) {
           item.addressLogs.push(item.data[property]);
           delete item.data[property];
         } else if (
           isNumeric(property) ||
           (item.event === "Transfer" &&
-            (property === "to" || property === "from"))
+            (property === "to" || property === "from")) ||
+          (!isNumeric(property) && web3.utils.isAddress(item.data[property]))
         ) {
           delete item.data[property];
         }
@@ -225,6 +212,26 @@ router.get("/get-log", async function (req, res, next) {
     res.status(200).send(error);
   }
 });
+
+router.get("/get-implementation", async function (req, res, next) {
+  const contract = req.query.contract;
+  const net = req.query.net;
+  const network =
+    net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
+  const response = await getImplementation(network, contract);
+  res.status(200).send(response);
+});
+
+const getImplementation = async (network, contract) => {
+  const params = {
+    module: "contract",
+    action: "getsourcecode",
+    address: contract,
+  };
+  const response = await etherScan(network, params);
+
+  return response.data.result[0].Implementation;
+};
 
 const getABI = async (network, contract) => {
   const response = await axios.get(
