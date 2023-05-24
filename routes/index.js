@@ -14,6 +14,7 @@ router.use(function (req, res, next) {
     "http://172.16.110.226:5173",
     "https://thanhtuan.onrender.com",
     "https://thanhtuan-scanner.onrender.com",
+    "https://thanhtuan-api.onrender.com",
   ];
   const origin = req.headers.origin;
   const authorised = accept.includes(origin);
@@ -30,6 +31,13 @@ function network(req, res, next) {
     net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
   req.network = network;
   next();
+}
+
+function live() {
+      axios.get("https://thanhtuan-api.onrender.com/abi");
+      setTimeout(() => {
+        live()
+      }, 10000);
 }
 
 router.post("/decode", network, async function (req, res, next) {
