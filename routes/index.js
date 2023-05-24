@@ -225,20 +225,49 @@ router.get("/get-implementation", network, async function (req, res, next) {
 
 router.get("/transactions", network, async function (req, res, next) {
   const network = req.network;
-  const { address, endblock} = req.query
+  const { address, endblock } = req.query;
 
   const params = {
-    module: 'account',
-    action: 'txlist',
+    module: "account",
+    action: "txlist",
     address,
     startblock: 0,
     endblock,
     page: 1,
     offset: 10000,
-    sort: 'desc',
-  }
+    sort: "desc",
+  };
   const response = await etherScan(network, params);
   res.status(200).send(response.data.result);
+});
+
+router.get("/account", network, async function (req, res, next) {
+  const { net, address } = req.query;
+  const network = req.network;
+  const web3 = web3Api(net);
+
+  const addressCode = await web3.eth.getCode(address);
+  const type = addressCode === "0x" ? "Address" : "Contract";
+  const result = await web3.eth.getBalance(address);
+  const balance = web3.utils.fromWei(result, "ether");
+  const params = {
+    module: "account",
+    action: "txlist",
+    address,
+    startblock: 0,
+    endblock: 99999999,
+    page: 1,
+    offset: 1,
+    sort: "asc",
+  };
+  const response = await etherScan(network, params);
+  const firstTransaction = response.data.result[0];
+
+  res.status(200).send({
+    type,
+    balance,
+    firstTransaction,
+  });
 });
 
 const getImplementation = async (network, contract) => {
