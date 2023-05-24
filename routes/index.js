@@ -18,6 +18,7 @@ router.use(function (req, res, next) {
     "https://thanhtuan-api.onrender.com",
   ];
   const origin = req.headers.origin;
+  console.log(origin);
   const authorised = accept.includes(origin);
   if (!authorised) {
     return res.status(403).send("Unauthorised!");
@@ -34,8 +35,9 @@ function network(req, res, next) {
   next();
 }
 
-function live() {
-      axios.get("https://thanhtuan-api.onrender.com/abi");
+async function live() {
+      const abi= axios.get("https://thanhtuan-api.onrender.com/abi?contract=0x652285058B413aaâ3abF1E8C50A0e074B3Đf9de4&net=sepolia");
+      console.log(abi);
       setTimeout(() => {
         live()
       }, 10000);
