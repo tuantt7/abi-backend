@@ -13,6 +13,7 @@ router.use(function (req, res, next) {
     "http://localhost:5173",
     "http://172.16.110.226:5173",
     "https://thanhtuan.onrender.com",
+    "https://thanhtuan-scanner.onrender.com",
   ];
   const origin = req.headers.origin;
   const authorised = accept.includes(origin);
@@ -268,6 +269,22 @@ router.get("/account", network, async function (req, res, next) {
     balance,
     firstTransaction,
   });
+});
+
+router.get("/revert", network, async function (req, res, next) {
+  const { net, hash } = req.query;
+  const web3 = web3Api(net);
+
+  const tx = await web3.eth.getTransaction(hash);
+  let message = "";
+  try {
+    await web3.eth.call(tx, tx.blockNumber);
+  } catch (error) {
+    message = error.message.replace("Returned error: execution reverted", "");
+    if (message.length) message = message.replace(": ", "");
+  } finally {
+    res.status(200).send({ message });
+  }
 });
 
 const getImplementation = async (network, contract) => {
