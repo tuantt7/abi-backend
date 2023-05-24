@@ -36,7 +36,7 @@ function network(req, res, next) {
 }
 
 async function live() {
-      const abi= axios.get("https://thanhtuan-api.onrender.com/abi?contract=0x652285058B413aaâ3abF1E8C50A0e074B3Đf9de4&net=sepolia");
+      const abi = await axios.get("https://thanhtuan-api.onrender.com/abi?contract=0x652285058B413aaâ3abF1E8C50A0e074B3Đf9de4&net=sepolia");
       console.log(abi);
       setTimeout(() => {
         live()
