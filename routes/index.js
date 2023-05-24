@@ -34,7 +34,7 @@ router.use(function (req, res, next) {
 });
 
 function network(req, res, next) {
-  const net = req.query.net;
+  const net = req.query.net || req.body.net;
   const network =
     net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
   req.network = network;
@@ -320,8 +320,9 @@ const getImplementation = async (network, contract) => {
     address: contract,
   };
   const response = await etherScan(network, params);
+  const source = response.data.result.find(item => item.Implementation)
 
-  return response.data.result[0].Implementation;
+  return source?.Implementation ?? '';
 };
 
 const getABI = async (network, contract) => {
