@@ -23,12 +23,18 @@ router.use(function (req, res, next) {
   }
 });
 
-router.post("/decode", async function (req, res, next) {
-  const contract = req.body.contract;
-  const hx = req.body.hx;
-  const net = req.body.net;
+function network(req, res, next) {
+  const net = req.query.net;
   const network =
     net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
+  req.network = network;
+  next();
+}
+
+router.post("/decode", network, async function (req, res, next) {
+  const contract = req.body.contract;
+  const hx = req.body.hx;
+  const network = req.network;
 
   const address = (await getImplementation(network, contract)) || contract;
 
@@ -110,20 +116,17 @@ router.get("/txsBlock", async function (req, res, next) {
   }
 });
 
-router.get("/abi", async function (req, res, next) {
+router.get("/abi", network, async function (req, res, next) {
   const contract = req.query.contract;
-  const net = req.query.net;
-  const network =
-    net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
+  const network = req.network;
   const response = await getABI(network, contract);
   res.send(response);
 });
 
-router.get("/get-log", async function (req, res, next) {
+router.get("/get-log", network, async function (req, res, next) {
   const hash = req.query.hash;
   const net = req.query.net;
-  const network =
-    net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
+  const network = req.network;
   const web3 = web3Api(net);
 
   try {
@@ -213,13 +216,29 @@ router.get("/get-log", async function (req, res, next) {
   }
 });
 
-router.get("/get-implementation", async function (req, res, next) {
+router.get("/get-implementation", network, async function (req, res, next) {
   const contract = req.query.contract;
-  const net = req.query.net;
-  const network =
-    net === "sepolia" ? process.env.SEPOLIA_URL : process.env.MAINNET_URL;
+  const network = req.network;
   const response = await getImplementation(network, contract);
   res.status(200).send(response);
+});
+
+router.get("/transactions", network, async function (req, res, next) {
+  const network = req.network;
+  const { address, endblock} = req.query
+
+  const params = {
+    module: 'account',
+    action: 'txlist',
+    address,
+    startblock: 0,
+    endblock,
+    page: 1,
+    offset: 10000,
+    sort: 'desc',
+  }
+  const response = await etherScan(network, params);
+  res.status(200).send(response.data.result);
 });
 
 const getImplementation = async (network, contract) => {
