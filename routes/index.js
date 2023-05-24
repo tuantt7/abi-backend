@@ -48,23 +48,14 @@ async function live() {
       contract: "0x572Af1Afa5afCfc6Fdf1EB2913Aa4463037860E8",
       net: "sepolia"
     }
-    var d = new Date()
-    const dformat = [d.getMonth() + 1,
-    d.getDate(),
-    d.getFullYear()].join('/') + ' ' +
-      [d.getHours(),
-      d.getMinutes(),
-      d.getSeconds()].join(':');
-    console.log('Live ' + dformat);
-
     try {
-      const p = await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
-      console.log(p.data);
+      await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
+      console.log('Live')
     } catch (error) {
       console.log(error);
     }
     live()
-  }, 10000);
+  }, 840000);
 }
 
 router.post("/decode", network, async function (req, res, next) {
