@@ -9,7 +9,7 @@ const { web3Api } = require("../web3");
 const { etherScan } = require("../etherScan");
 
 router.use(function (req, res, next) {
-  live();
+  // live();
   const accept = [
     "http://localhost:5173",
     "http://172.16.110.226:5173",
