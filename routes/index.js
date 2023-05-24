@@ -8,8 +8,14 @@ router.use(cors());
 const { web3Api } = require("../web3");
 const { etherScan } = require("../etherScan");
 
+let timeout = 10000
+
 router.use(function (req, res, next) {
-  // live();
+  if (timeout) clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    live();
+  })
+
   const accept = [
     "http://localhost:5173",
     "http://172.16.110.226:5173",
@@ -17,11 +23,11 @@ router.use(function (req, res, next) {
     "https://thanhtuan-scanner.onrender.com",
     "thanhtuan-api.onrender.com",
   ];
-  const origin = req.headers.origin;
-  console.log(req.headers);
+  const origin = req.headers.origin || req.headers.host;
   const authorised = accept.includes(origin);
+  console.log(origin);
   if (!authorised) {
-    // return res.status(403).send("Unauthorised!");
+    return res.status(403).send("Unauthorised!");
   } else {
     next();
   }
@@ -36,16 +42,27 @@ function network(req, res, next) {
 }
 
 async function live() {
-  const params = {
-    contract: "0x572Af1Afa5afCfc6Fdf1EB2913Aa4463037860E8",
-    net: "sepolia"
-  }
-  try {
-    await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
-  } catch (error) {
-    console.log(error);
-  }
-  setTimeout(() => {
+  if (timeout) clearTimeout(timeout)
+  timeout = setTimeout(async () => {
+    const params = {
+      contract: "0x572Af1Afa5afCfc6Fdf1EB2913Aa4463037860E8",
+      net: "sepolia"
+    }
+    var d = new Date()
+    const dformat = [d.getMonth() + 1,
+    d.getDate(),
+    d.getFullYear()].join('/') + ' ' +
+      [d.getHours(),
+      d.getMinutes(),
+      d.getSeconds()].join(':');
+    console.log('Live ' + dformat);
+
+    try {
+      const p = await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
+      console.log(p.data);
+    } catch (error) {
+      console.log(error);
+    }
     live()
   }, 10000);
 }
