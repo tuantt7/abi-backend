@@ -28,7 +28,7 @@ router.use(function (req, res, next) {
   const authorised = accept.includes(origin);
   console.log(origin);
   if (!authorised) {
-    return res.status(403).send("Unauthorised!");
+    // return res.status(403).send("Unauthorised!");
   } else {
     next();
   }
