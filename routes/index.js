@@ -8,13 +8,13 @@ router.use(cors());
 const { web3Api } = require("../web3");
 const { etherScan } = require("../etherScan");
 
-let timeout = 10000
+let timeout = 10000;
 
 router.use(function (req, res, next) {
-  if (timeout) clearTimeout(timeout)
+  if (timeout) clearTimeout(timeout);
   timeout = setTimeout(() => {
     live();
-  })
+  });
 
   const accept = [
     "http://localhost:5173",
@@ -42,19 +42,19 @@ function network(req, res, next) {
 }
 
 async function live() {
-  if (timeout) clearTimeout(timeout)
+  if (timeout) clearTimeout(timeout);
   timeout = setTimeout(async () => {
     const params = {
       contract: "0x572Af1Afa5afCfc6Fdf1EB2913Aa4463037860E8",
-      net: "sepolia"
-    }
+      net: "sepolia",
+    };
     try {
       await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
-      console.log('Live')
+      console.log("Live");
     } catch (error) {
       console.log(error);
     }
-    live()
+    live();
   }, 840000);
 }
 
@@ -63,25 +63,31 @@ router.post("/decode", network, async function (req, res, next) {
   const hx = req.body.hx;
   const network = req.network;
 
-  const address = (await getImplementation(network, contract)) || contract;
+  try {
+    const address = (await getImplementation(network, contract)) || contract;
 
-  const response = await getABI(network, address);
-  if (response.status == 0 && response.message == "NOTOK") {
-    res.send(response);
-    return;
+    const response = await getABI(network, address);
+    if (response.status == 0 && response.message == "NOTOK") {
+      res.send(response);
+      return;
+    }
+    const abi = JSON.parse(response.result);
+    abiDecoder.addABI(abi);
+    const decodedData = abiDecoder.decodeMethod(hx) || {};
+    if (decodedData && decodedData.name) decodedData.status = 1;
+    res.send({ decodedData, abi });
+  } catch (error) {
+    console.log(error.message);
+    res.status(404).send({ message: error.message });
   }
-  const abi = JSON.parse(response.result);
-  abiDecoder.addABI(abi);
-  const decodedData = abiDecoder.decodeMethod(hx) || {};
-  if (decodedData && decodedData.name) decodedData.status = 1;
-  res.send({ decodedData, abi });
 });
 
 router.get("/transaction", async function (req, res, next) {
   const web3 = web3Api(req.query.net);
+  const { hash } = req.query;
   try {
-    const response = await web3.eth.getTransaction(req.query.id);
-    const receipt = await web3.eth.getTransactionReceipt(req.query.id);
+    const response = await web3.eth.getTransaction(hash);
+    const receipt = await web3.eth.getTransactionReceipt(hash);
     const block = await web3.eth.getBlock(response.blockNumber);
     response.timestamp = block.timestamp;
     let isContract = false;
@@ -92,23 +98,24 @@ router.get("/transaction", async function (req, res, next) {
     response.isContract = isContract;
     res.status(200).send({ response, receipt });
   } catch (error) {
-    console.log(error);
-    res.status(200).send(error);
+    console.log(error.message);
+    res.status(404).send({ message: error.message });
   }
 });
 
 router.get("/block", async function (req, res, next) {
   const web3 = web3Api(req.query.net);
+  const blockNumber = req.query.number;
   try {
-    const response = await web3.eth.getBlock(req.query.id);
+    const response = await web3.eth.getBlock(blockNumber);
 
     const latestFinalizedBlock = await web3.eth.getBlock("finalized");
-    response.finalized = req.query.id <= latestFinalizedBlock.number;
+    response.finalized = blockNumber <= latestFinalizedBlock.number;
 
     res.status(200).send(response);
   } catch (error) {
-    console.log(error);
-    res.status(200).send(error);
+    console.log(error.message);
+    res.status(404).send({ message: error.message });
   }
 });
 
@@ -138,8 +145,8 @@ router.get("/txsBlock", async function (req, res, next) {
       total: response.transactions.length,
     });
   } catch (error) {
-    console.log(error);
-    res.status(200).send(error);
+    console.log(error.message);
+    res.status(404).send({ message: error.message });
   }
 });
 
@@ -238,8 +245,8 @@ router.get("/get-log", network, async function (req, res, next) {
 
     res.status(200).send(logs);
   } catch (error) {
-    console.log(error);
-    res.status(200).send(error);
+    console.log(error.message);
+    res.status(404).send({ message: error.message });
   }
 });
 
@@ -272,8 +279,14 @@ router.get("/account", network, async function (req, res, next) {
   const { net, address } = req.query;
   const network = req.network;
   const web3 = web3Api(net);
-
-  const addressCode = await web3.eth.getCode(address);
+  let addressCode = null;
+  try {
+    addressCode = await web3.eth.getCode(address);
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).send({ message: error.message });
+    return;
+  }
   const type = addressCode === "0x" ? "Address" : "Contract";
   const result = await web3.eth.getBalance(address);
   const balance = web3.utils.fromWei(result, "ether");
@@ -320,9 +333,9 @@ const getImplementation = async (network, contract) => {
     address: contract,
   };
   const response = await etherScan(network, params);
-  const source = response.data.result.find(item => item.Implementation)
+  const source = response.data.result.find((item) => item.Implementation);
 
-  return source?.Implementation ?? '';
+  return source?.Implementation ?? "";
 };
 
 const getABI = async (network, contract) => {
