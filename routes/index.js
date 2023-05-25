@@ -22,6 +22,7 @@ router.use(function (req, res, next) {
     "https://thanhtuan.onrender.com",
     "https://thanhtuan-scanner.onrender.com",
     "thanhtuan-api.onrender.com",
+    "https://tuantt7.github.io",
   ];
   const origin = req.headers.origin || req.headers.host;
   const authorised = accept.includes(origin);
