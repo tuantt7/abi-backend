@@ -13,7 +13,7 @@ let timeout = 10000;
 router.use(function (req, res, next) {
   if (timeout) clearTimeout(timeout);
   timeout = setTimeout(() => {
-    live();
+    // live();
   });
 
   const accept = [
@@ -26,9 +26,9 @@ router.use(function (req, res, next) {
   ];
   const origin = req.headers.origin || req.headers.host;
   const authorised = accept.includes(origin);
-  console.log(origin);
+  console.log("From " + origin);
   if (!authorised) {
-    // return res.status(403).send("Unauthorised!");
+    return res.status(403).send("Unauthorised!");
   } else {
     next();
   }
@@ -111,7 +111,9 @@ router.get("/block", async function (req, res, next) {
     const response = await web3.eth.getBlock(blockNumber);
 
     const latestFinalizedBlock = await web3.eth.getBlock("finalized");
+    const latest = await web3.eth.getBlock("latest");
     response.finalized = blockNumber <= latestFinalizedBlock.number;
+    response.latest = latest.number;
 
     res.status(200).send(response);
   } catch (error) {
@@ -120,7 +122,7 @@ router.get("/block", async function (req, res, next) {
   }
 });
 
-router.get("/txsBlock", async function (req, res, next) {
+router.get("/txn-block", async function (req, res, next) {
   const web3 = web3Api(req.query.net);
   const { page } = req.query;
 
@@ -272,8 +274,16 @@ router.get("/transactions", network, async function (req, res, next) {
     offset: 10000,
     sort: "desc",
   };
-  const response = await etherScan(network, params);
-  res.status(200).send(response.data.result);
+
+  try {
+    const response = await etherScan(network, params);
+    res.status(200).send(response.data.result);
+    return;
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).send({ message: error.message });
+  }
+  res.status(400).send({ message: "Not found" });
 });
 
 router.get("/account", network, async function (req, res, next) {
@@ -325,6 +335,62 @@ router.get("/revert", network, async function (req, res, next) {
   } finally {
     res.status(200).send({ message });
   }
+});
+
+router.get("/mined", network, async function (req, res, next) {
+  const network = req.network;
+  const { address, page } = req.query;
+  const params = {
+    module: "account",
+    action: "getminedblocks",
+    address,
+    blocktype: "blocks",
+    page,
+    offset: 50,
+  };
+
+  try {
+    const response = await etherScan(network, params);
+    res.status(200).send(response.data.result);
+    return;
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).send({ message: error.message });
+  }
+  res.status(400).send({ message: "Not found" });
+});
+
+router.get("/total-mined", network, async function (req, res, next) {
+  const network = req.network;
+  const { address } = req.query;
+  let page = 1;
+  const get = async (page) => {
+    const params = {
+      module: "account",
+      action: "getminedblocks",
+      address,
+      blocktype: "blocks",
+      page,
+      offset: 10000,
+    };
+    try {
+      const response = await etherScan(network, params);
+      if (response.data.result.length === 10000) {
+        get(page + 1, network, address);
+      } else {
+        res
+          .status(200)
+          .send({ total: (page - 1) * 10000 + response.data.result.length });
+        return;
+      }
+    } catch (error) {
+      return [];
+    }
+  };
+
+  await get(page, network, address);
+
+  res.status(200);
 });
 
 const getImplementation = async (network, contract) => {
