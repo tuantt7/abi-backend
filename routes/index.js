@@ -11,11 +11,8 @@ const { etherScan } = require("../etherScan");
 let timeout = 10000;
 
 router.use(function (req, res, next) {
-  if (timeout) clearTimeout(timeout);
-  timeout = setTimeout(() => {
-    console.log("Request live");
-    live();
-  });
+  console.log("Request live");
+  live();
 
   const accept = [
     "http://localhost:5173",
