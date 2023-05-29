@@ -13,7 +13,8 @@ let timeout = 10000;
 router.use(function (req, res, next) {
   if (timeout) clearTimeout(timeout);
   timeout = setTimeout(() => {
-    // live();
+    console.log("Request live");
+    live();
   });
 
   const accept = [
