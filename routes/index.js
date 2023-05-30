@@ -299,6 +299,8 @@ router.get("/account", network, async function (req, res, next) {
   const type = addressCode === "0x" ? "Address" : "Contract";
   const result = await web3.eth.getBalance(address);
   const balance = web3.utils.fromWei(result, "ether");
+  const abi = await getABI(network, address);
+  const verified = abi.message !== "NOTOK";
   const params = {
     module: "account",
     action: "txlist",
@@ -316,6 +318,7 @@ router.get("/account", network, async function (req, res, next) {
     type,
     balance,
     firstTransaction,
+    verified,
   });
 });
 
