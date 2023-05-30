@@ -391,6 +391,27 @@ router.get("/total-mined", network, async function (req, res, next) {
   res.status(200);
 });
 
+router.get("/in-txn", network, async function (req, res, next) {
+  const network = req.network;
+  const { hash } = req.query;
+
+  const params = {
+    module: "account",
+    action: "txlistinternal",
+    txhash: hash,
+  };
+
+  try {
+    const response = await etherScan(network, params);
+    res.status(200).send(response.data.result);
+    return;
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).send({ message: error.message });
+  }
+  res.status(400).send({ message: "Not found" });
+});
+
 const getImplementation = async (network, contract) => {
   const params = {
     module: "contract",
