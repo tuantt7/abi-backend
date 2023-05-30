@@ -24,7 +24,7 @@ router.use(function (req, res, next) {
   ];
   const origin = req.headers.origin || req.headers.host;
   const authorised = accept.includes(origin);
-  console.log("From " + origin);
+  console.log(req.headers.origin, req.headers.host);
   if (!authorised) {
     return res.status(403).send("Unauthorised!");
   } else {
