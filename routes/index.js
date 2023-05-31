@@ -45,7 +45,7 @@ async function live() {
       net: "sepolia",
     };
     try {
-      await axios.get("http://localhost:3000/abi", { params });
+      await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
       console.log("Live");
     } catch (error) {
       console.log(error.message);
