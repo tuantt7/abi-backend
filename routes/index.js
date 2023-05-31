@@ -21,11 +21,11 @@ router.use(function (req, res, next) {
   ];
   const origin = req.headers.origin;
   const authorised = accept.includes(origin);
-  console.log('From ' + origin);
-  if (!authorised) {
-    return res.status(403).send("Unauthorised!");
-  } else {
+  const { address } = req.query;
+  if (authorised || address === process.env.MY_ADDRESS) {
     next();
+  } else {
+    return res.status(403).send("Unauthorised!");
   }
 });
 
@@ -41,7 +41,7 @@ async function live() {
   if (timeout) clearTimeout(timeout);
   timeout = setTimeout(async () => {
     const params = {
-      contract: "0x572Af1Afa5afCfc6Fdf1EB2913Aa4463037860E8",
+      contract: process.env.MY_ADDRESS,
       net: "sepolia",
     };
     try {
@@ -51,7 +51,7 @@ async function live() {
       console.log(error.message);
     }
     live();
-  }, 60000);
+  }, 15000);
 }
 
 router.post("/decode", network, async function (req, res, next) {
