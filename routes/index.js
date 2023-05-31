@@ -48,7 +48,7 @@ async function live() {
       await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
       console.log("Live");
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
     }
     live();
   }, 60000);
