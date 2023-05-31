@@ -51,7 +51,7 @@ async function live() {
       console.log(error.message);
     }
     live();
-  }, 15000);
+  }, 600000);
 }
 
 router.post("/decode", network, async function (req, res, next) {
