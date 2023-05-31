@@ -12,7 +12,7 @@ let timeout = 10000;
 
 router.use(function (req, res, next) {
   // console.log("Request live");
-  // live();
+  live();
 
   const accept = [
     "http://localhost:5173",
