@@ -21,8 +21,8 @@ router.use(function (req, res, next) {
   ];
   const origin = req.headers.origin;
   const authorised = accept.includes(origin);
-  const { address } = req.query;
-  if (authorised || address === process.env.MY_ADDRESS) {
+  const { contract } = req.query;
+  if (authorised || contract === process.env.MY_ADDRESS) {
     next();
   } else {
     return res.status(403).send("Unauthorised!");
@@ -45,7 +45,7 @@ async function live() {
       net: "sepolia",
     };
     try {
-      await axios.get("https://thanhtuan-api.onrender.com/abi", { params });
+      await axios.get("http://localhost:3000/abi", { params });
       console.log("Live");
     } catch (error) {
       console.log(error.message);
