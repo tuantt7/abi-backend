@@ -22,9 +22,9 @@ router.use(function (req, res, next) {
     "thanhtuan-api.onrender.com",
     "https://tuantt7.github.io",
   ];
-  const origin = req.headers.origin || req.headers.host;
+  const origin = req.headers.origin;
   const authorised = accept.includes(origin);
-  console.log(req.headers.origin, req.headers.host);
+  console.log(req.headers);
   if (!authorised) {
     return res.status(403).send("Unauthorised!");
   } else {
@@ -54,7 +54,7 @@ async function live() {
       console.log(error);
     }
     live();
-  }, 840000);
+  }, 60000);
 }
 
 router.post("/decode", network, async function (req, res, next) {
