@@ -11,20 +11,17 @@ const { etherScan } = require("../etherScan");
 let timeout = 10000;
 
 router.use(function (req, res, next) {
-  console.log("Request live");
-  live();
+  // console.log("Request live");
+  // live();
 
   const accept = [
     "http://localhost:5173",
     "http://172.16.110.226:5173",
     "https://thanhtuan.onrender.com",
-    "https://thanhtuan-scanner.onrender.com",
-    "thanhtuan-api.onrender.com",
-    "https://tuantt7.github.io",
   ];
   const origin = req.headers.origin;
   const authorised = accept.includes(origin);
-  console.log(req.headers);
+  console.log('From ' + origin);
   if (!authorised) {
     return res.status(403).send("Unauthorised!");
   } else {
