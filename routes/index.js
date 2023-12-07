@@ -1,9 +1,9 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
 require("dotenv").config();
 const abiDecoder = require("abi-decoder");
 const axios = require("axios");
-var cors = require("cors");
+const cors = require("cors");
 router.use(cors());
 const { web3Api } = require("../web3");
 const { etherScan } = require("../etherScan");
@@ -11,7 +11,6 @@ const { etherScan } = require("../etherScan");
 let timeout = 10000;
 
 router.use(function (req, res, next) {
-  // console.log("Request live");
   live();
 
   const accept = [
@@ -71,7 +70,7 @@ router.post("/decode", network, async function (req, res, next) {
     const abi = JSON.parse(response.result);
     abiDecoder.addABI(abi);
     const decodedData = abiDecoder.decodeMethod(hx) || {};
-    if (decodedData && decodedData.name) decodedData.status = 1;
+    if (decodedData?.name) decodedData.status = 1;
     res.send({ decodedData, abi });
   } catch (error) {
     console.log(error.message);
@@ -375,7 +374,7 @@ router.get("/total-mined", network, async function (req, res, next) {
     try {
       const response = await etherScan(network, params);
       if (response.data.result.length === 10000) {
-        get(page + 1, network, address);
+        get(page + 1);
       } else {
         res
           .status(200)
@@ -387,7 +386,7 @@ router.get("/total-mined", network, async function (req, res, next) {
     }
   };
 
-  await get(page, network, address);
+  await get(page);
 
   res.status(200);
 });
