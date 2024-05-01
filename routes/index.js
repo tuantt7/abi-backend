@@ -25,7 +25,7 @@ router.use(function (req, res, next) {
     next();
   } else {
     next();
-    // return res.status(403).send("Unauthorised!");
+    return res.status(403).send("Unauthorised!");
   }
 });
 
