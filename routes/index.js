@@ -19,6 +19,7 @@ router.use(function (req, res, next) {
     "https://thanhtuan.onrender.com",
   ];
   const origin = req.headers.origin;
+  console.log('origin: ' + origin);
   const authorised = accept.includes(origin);
   const { contract } = req.query;
   if (authorised || contract === process.env.MY_ADDRESS) {
