@@ -25,7 +25,7 @@ router.use(function (req, res, next) {
   if (authorised || contract === process.env.MY_ADDRESS) {
     next();
   } else {
-    next();
+    // next();
     return res.status(403).send("Unauthorised!");
   }
 });
